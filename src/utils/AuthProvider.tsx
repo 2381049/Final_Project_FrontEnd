@@ -1,4 +1,12 @@
-import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from "react";
+// FIX: Hapus 'React' jika tidak digunakan, import hook spesifik
+import { 
+  createContext, 
+  ReactNode, 
+  useContext, 
+  useState, 
+  useEffect, 
+  useCallback 
+} from "react"; 
 import AxiosInstance from "./AxiosInstance"; // Pastikan path benar
 
 interface User {
@@ -11,7 +19,7 @@ interface User {
 type AuthContextType = {
   isAuthenticated: boolean;
   user: User | null; 
-  isLoading: boolean; // <-- Tambahkan isLoading
+  isLoading: boolean; 
   login: (token: string) => Promise<void>; 
   logout: () => void;
   getToken: () => string | null;
@@ -20,79 +28,62 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false); // Mulai dari false
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false); 
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // <-- State loading, mulai true
+  const [isLoading, setIsLoading] = useState<boolean>(true); 
 
   const getToken = useCallback((): string | null => {
-    return localStorage.getItem("authToken"); // <-- KONSISTENSI KEY: Gunakan 'authToken'
+    return localStorage.getItem("authToken"); 
   }, []);
 
-  // Fungsi untuk mengambil data user berdasarkan token
   const fetchUser = useCallback(async () => {
     const token = getToken();
     if (token) {
       try {
-        // Panggil API untuk mendapatkan data user 
-        // Pastikan interceptor Axios sudah menambahkan token ke header ini
         const response = await AxiosInstance.get<User>('/api/auth/profile'); 
-        
         setUser(response.data);
         setIsAuthenticated(true);
       } catch (error) {
         console.error("AuthProvider: Failed to fetch user profile:", error);
-        // Token mungkin tidak valid, lakukan logout
-        localStorage.removeItem("authToken"); // <-- KONSISTENSI KEY
+        localStorage.removeItem("authToken"); 
         setUser(null);
         setIsAuthenticated(false);
       } finally {
-         // Pastikan loading selesai baik sukses maupun gagal fetch user
          setIsLoading(false);
       }
     } else {
-      // Jika tidak ada token, pastikan user null dan isAuth false, loading selesai
       setUser(null);
       setIsAuthenticated(false);
-      setIsLoading(false); // <-- Loading selesai jika tidak ada token
+      setIsLoading(false); 
     }
-  }, [getToken]); // Tambahkan getToken sebagai dependency jika diperlukan
+  }, [getToken]); 
 
-  // Ambil data user saat komponen pertama kali dimuat
   useEffect(() => {
-    setIsLoading(true); // Set loading true saat memulai fetch awal
+    setIsLoading(true); 
     fetchUser();
-  }, [fetchUser]); // Jalankan ulang jika fetchUser berubah (meskipun seharusnya tidak)
+  }, [fetchUser]); 
 
-  // Modifikasi login
   const login = async (token: string) => {
-    setIsLoading(true); // Set loading true saat proses login dimulai
-    localStorage.setItem("authToken", token); // <-- KONSISTENSI KEY
-    // Set authenticated true sementara, fetchUser akan konfirmasi
+    setIsLoading(true); 
+    localStorage.setItem("authToken", token); 
     setIsAuthenticated(true); 
     try {
-       // Setelah set token, fetch data user untuk memastikan token valid & dapatkan data user
        await fetchUser(); 
     } catch (e) {
-        // fetchUser sudah handle error dan logout jika perlu
-    } finally {
-        // Loading selesai setelah fetchUser dipanggil (baik sukses/gagal)
-        // fetchUser sendiri sudah set isLoading(false) di dalamnya
-    }
+        // fetchUser sudah handle error
+    } 
+    // isLoading akan diset false di dalam fetchUser
   };
 
-  // Modifikasi logout
   const logout = () => {
-    localStorage.removeItem("authToken"); // <-- KONSISTENSI KEY
+    localStorage.removeItem("authToken"); 
     setIsAuthenticated(false);
     setUser(null); 
-    setIsLoading(false); // Pastikan loading false saat logout
+    setIsLoading(false); 
   };
 
-
-  // Sertakan 'isLoading' dalam value
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout, getToken }}>
-      {/* Jangan render children sampai loading selesai */}
       {!isLoading ? children : null /* Atau tampilkan spinner global */}
     </AuthContext.Provider>
   );
