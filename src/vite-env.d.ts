@@ -1,8 +1,19 @@
-interface ImportMetaEnv {
-  readonly VITE_API_URL: string;
-  // tambahkan environment variable lain jika ada
-}
+    /// <reference types="vite/client" />
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+    interface ImportMetaEnv {
+      // Variabel custom Anda (pastikan ini ada dan namanya benar)
+      readonly VITE_API_URL: string; 
+
+      // Variabel standar Vite (pastikan ini ada)
+      readonly MODE: string;
+      readonly DEV: boolean; // <-- BARIS INI PENTING
+      readonly PROD: boolean;
+      readonly BASE_URL: string;
+      
+      // Tambahkan variabel VITE_* lainnya yang mungkin Anda gunakan
+    }
+
+    interface ImportMeta {
+      readonly env: ImportMetaEnv;
+    }
+    
